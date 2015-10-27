@@ -147,7 +147,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         # capability for multiple result sets or cursors
         self.supports_mars = False
-        self.open_cursor = None
 
         # Some drivers need unicode encoded as UTF8. If this is left as
         # None, it will be determined based on the driver, namely it'll be
@@ -187,13 +186,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.validation = BaseDatabaseValidation(self)
 
     def create_cursor(self):
-        if self.supports_mars:
-            cursor = CursorWrapper(self.connection.cursor(), self)
-        else:
-            if not self.open_cursor or not self.open_cursor.active:
-                self.open_cursor = CursorWrapper(self.connection.cursor(), self)
-            cursor = self.open_cursor
-        return cursor
+        return CursorWrapper(self.connection.cursor(), self)
 
     def get_connection_params(self):
         settings_dict = self.settings_dict
@@ -371,16 +364,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         with self.temporary_connection() as cursor:
             cursor.execute("SELECT CAST(SERVERPROPERTY('EngineEdition') AS integer)")
             return cursor.fetchone()[0] == EDITION_AZURE_SQL_DB
-
-    def _close(self):
-        if self.open_cursor:
-            try:
-                self.open_cursor.close()
-            except:
-                pass
-            finally:
-                self.open_cursor = None
-        super(DatabaseWrapper, self)._close()
 
     def _execute_foreach(self, sql, table_names=None):
         cursor = self.cursor()
