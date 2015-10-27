@@ -264,7 +264,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.supports_mars = True
         if self.supports_mars:
             cstr_parts.append('MARS_Connection=yes')
-                
+
         if options.get('extra_params', None):
             cstr_parts.append(options['extra_params'])
 
